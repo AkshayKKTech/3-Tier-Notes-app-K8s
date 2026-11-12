@@ -60,7 +60,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: login to ecr
-        uses: aws-actions/amazon-ecr-login@v3
+        uses: aws-actions/amazon-ecr-login@v2
         id: login-ecr
 
       - name: build and push to ecr
