@@ -1,0 +1,73 @@
+name: build and test frontend
+
+on:
+  workflow_dispatch
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: frontend
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu:latest
+
+    steps:
+      - name: checkout stage
+        uses: actions/checkout@v3 
+      
+      - name: setup node
+        uses: actions/setup-nodes@v4
+        with:
+          node-version: '18'
+        
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm Install
+
+      - name: Running test
+        working-directory: frontend
+        run: CI=true npm test -- --watchAll=false
+
+      - name: Building
+        working-directory: frontend
+        run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-buildfile
+          path: build/
+          retention-days: 1
+
+  docker_build_push:
+    needs: build_and_test
+    runs-on: ubuntu:latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: react-buildfile
+          path: build/
+
+      - name: configure aws credential
+        uses: action-aws/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: login to ecr
+        uses: action-aws/amazon-ecr-login@v3
+        id: login-ecr
+
+      - name: build and push to ecr
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
