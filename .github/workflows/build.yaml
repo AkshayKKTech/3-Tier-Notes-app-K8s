@@ -36,7 +36,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: react-buildfile
-          path: build/
+          path: frontend/build
           retention-days: 1
 
   docker_build_push:
@@ -50,7 +50,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: react-buildfile
-          path: build/
+          path: frontend/build
 
       - name: configure aws credential
         uses: aws-actions/configure-aws-credentials@v4
