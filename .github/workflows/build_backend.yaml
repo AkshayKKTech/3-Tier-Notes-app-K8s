@@ -51,8 +51,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: backend-artifact
-          path: /backend/target
-          if-no-file-found: error
+          path: ./backend/target
 
       - name: docker auth
         uses: aws-actions/configure-aws-credentials@v4
