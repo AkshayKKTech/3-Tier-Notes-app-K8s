@@ -1,0 +1,84 @@
+name: springboot backend ci/cd
+
+on:
+  workflow_dispatch
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: backend
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup jdk
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: unit test
+        working-directory: backend
+        run: mvn clean test
+
+      - name: build 
+        working-directory: backend
+        run: |
+          mvn package -DskipTests
+
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-artifact
+          path: backend/target/*.jar
+          if-no-file-found: error
+
+
+  Docker_build_deploy:
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-artifact
+          path: /backend/target
+          if-no-file-found: error
+
+      - name: docker auth
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: docker login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: docker build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry}}/${{ env.ECR_REPOSITORY}}:v1
+
+
+
+
+
+
+
+
+
+
