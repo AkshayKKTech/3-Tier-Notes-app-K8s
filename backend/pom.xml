@@ -44,9 +44,21 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-         <dependency>
+        <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- Micrometer Tracing Bridge for OpenTelemetry -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-otel</artifactId>
+        </dependency>
+
+        <!-- OpenTelemetry OTLP Exporter to ship traces -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-otlp</artifactId>
         </dependency>
         
         <dependency>
@@ -73,4 +85,4 @@
             </plugin>
         </plugins>
     </build>
-</project>  
+</project>
