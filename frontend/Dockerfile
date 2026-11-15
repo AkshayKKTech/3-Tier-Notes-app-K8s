@@ -1,39 +1,31 @@
 # Build stage
 FROM node:18-alpine AS build
-
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies (use npm install instead of npm ci for flexibility)
 RUN npm install --production=false
-
-# Copy source code
 COPY public ./public
 COPY src ./src
-
-# Build application
 RUN npm run build
 
 # Production stage
 FROM nginx:alpine
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy main nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy server block config
+COPY default.conf /etc/nginx/conf.d/default.conf
 
 # Copy built assets from build stage
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Create non-root user
+# Create non-root user and permissions
 RUN addgroup -g 1001 -S appgroup && \
     adduser -S -u 1001 -G appgroup appuser && \
     chown -R appuser:appgroup /usr/share/nginx/html && \
     chown -R appuser:appgroup /var/cache/nginx && \
     chown -R appuser:appgroup /var/log/nginx && \
-    chown -R appuser:appgroup /etc/nginx/conf.d && \
-    touch /var/run/nginx.pid && \
-    chown -R appuser:appgroup /var/run/nginx.pid
+    chown -R appuser:appgroup /etc/nginx
 
 USER appuser
 
